@@ -28,3 +28,6 @@ $(TARGET): $(OBJ) Makefile
 
 clean:
 	rm -rf build
+
+run: $(TARGET)
+	./$(TARGET)
