@@ -13,6 +13,7 @@ SRC = \
   src/Shader.cpp \
   src/Triangle.cpp \
   src/Circle.cpp \
+	src/Ticks.cpp \
   src/main.cpp
 
 OBJ = $(patsubst src/%.cpp,build/%.o,$(SRC))

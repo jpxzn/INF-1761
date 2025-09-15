@@ -1,178 +1,68 @@
 #include "Shader.h"
-
 #include <GL/glew.h>
 #include <glm/gtc/type_ptr.hpp>
-
 #include <fstream>
 #include <iostream>
-#include <sstream> 
+#include <sstream>
 #include <cstdlib>
 
-// read file content to a string
-static std::string ReadFile (const std::string& filename) 
-{
-  std::ifstream fp;
-  fp.open(filename); 
-  if (!fp.is_open()) {
-    std::cerr << "Could not open file: " << filename << std::endl;
-    exit(1);
-  } 
-  std::stringstream strStream;
-  strStream << fp.rdbuf(); //read the file
-  return strStream.str(); //str holds the content of the file
+static std::string ReadFile (const std::string& filename) {
+  std::ifstream fp(filename);
+  if (!fp.is_open()) { std::cerr << "Could not open file: " << filename << std::endl; std::exit(1); }
+  std::stringstream ss; ss << fp.rdbuf(); return ss.str();
 }
 
-static void CompileShader (const std::string& filename, GLuint id)
-{
-  GLint status;
+static void CompileShader (const std::string& filename, GLuint id) {
   glCompileShader(id);
-  glGetShaderiv(id, GL_COMPILE_STATUS, &status);
+  GLint status; glGetShaderiv(id, GL_COMPILE_STATUS, &status);
   if (!status) {
-     GLint len;
-     glGetShaderiv(id, GL_INFO_LOG_LENGTH, &len);
-     char* message = new char[len];
-     glGetShaderInfoLog(id, len, 0, message);
-     std::cerr << filename << ":" << std::endl << message << std::endl;
-     delete [] message;
-     exit(1);
-   }
-}
-
-static GLuint CreateShader (GLenum shadertype, const std::string& filename)
-{
-  GLuint id = glCreateShader(shadertype);
-  if (id==0) {
-    std::cerr << "Could not create shader object";
-    exit(1);
-  }
-  std::string source = ReadFile(filename);
-  const char* csource = source.c_str();
-  glShaderSource(id, 1, &csource, 0);
-  CompileShader(filename,id);
-  return id;
-}
-
-////////////////////////////
-
-ShaderPtr Shader::Make ()
-{
-  return ShaderPtr(new Shader());
-}
-
-Shader::Shader ()
-{
-  m_pid = glCreateProgram();
-  if (m_pid==0) {
-    std::cerr << "Could not create shader object";
-    exit(1);
+    GLint len; glGetShaderiv(id, GL_INFO_LOG_LENGTH, &len);
+    std::string log(len, '\0');
+    glGetShaderInfoLog(id, len, 0, log.data());
+    std::cerr << filename << ":\n" << log << std::endl;
+    std::exit(1);
   }
 }
 
-Shader::~Shader ()
-{
+static GLuint CreateShader (GLenum type, const std::string& filename) {
+  GLuint id = glCreateShader(type);
+  if (!id) { std::cerr << "Could not create shader object"; std::exit(1); }
+  std::string src = ReadFile(filename); const char* csrc = src.c_str();
+  glShaderSource(id,1,&csrc,nullptr); CompileShader(filename,id); return id;
 }
 
-void Shader::AttachVertexShader (const std::string& filename)
-{
-  GLuint sid = CreateShader(GL_VERTEX_SHADER,filename);
-  glAttachShader(m_pid,sid);
-}
-void Shader::AttachFragmentShader (const std::string& filename)
-{
-  GLuint sid = CreateShader(GL_FRAGMENT_SHADER,filename);
-  glAttachShader(m_pid,sid);
-}
-void Shader::AttachGeometryShader (const std::string& filename)
-{
-  GLuint sid = CreateShader(GL_GEOMETRY_SHADER,filename);
-  glAttachShader(m_pid,sid);
-}
-void Shader::AttachTesselationShader (const std::string& control, const std::string& evaluation)
-{
-  GLuint cid = CreateShader(GL_TESS_CONTROL_SHADER,control);
-  glAttachShader(m_pid,cid);
-  GLuint eid = CreateShader(GL_TESS_EVALUATION_SHADER,evaluation);
-  glAttachShader(m_pid,eid);
+ShaderPtr Shader::Make () { return ShaderPtr(new Shader()); }
+
+Shader::Shader () { m_pid = glCreateProgram(); if (!m_pid) { std::cerr << "Could not create shader object"; std::exit(1);} }
+Shader::~Shader () {}
+
+void Shader::AttachVertexShader (const std::string& f) { glAttachShader(m_pid, CreateShader(GL_VERTEX_SHADER,f)); }
+void Shader::AttachFragmentShader (const std::string& f) { glAttachShader(m_pid, CreateShader(GL_FRAGMENT_SHADER,f)); }
+void Shader::AttachGeometryShader (const std::string& f) { glAttachShader(m_pid, CreateShader(GL_GEOMETRY_SHADER,f)); }
+void Shader::AttachTesselationShader (const std::string& c, const std::string& e) {
+  glAttachShader(m_pid, CreateShader(GL_TESS_CONTROL_SHADER,c));
+  glAttachShader(m_pid, CreateShader(GL_TESS_EVALUATION_SHADER,e));
 }
 
-void Shader::Link ()
-{
-  GLint status;
+void Shader::Link () {
   glLinkProgram(m_pid);
-  glGetProgramiv(m_pid, GL_LINK_STATUS, &status);
+  GLint status; glGetProgramiv(m_pid, GL_LINK_STATUS,&status);
   if (!status) {
-    GLint len;
-    glGetProgramiv(m_pid, GL_INFO_LOG_LENGTH, &len);
-    char* message = new char[len];
-    glGetProgramInfoLog(m_pid, len, 0, message);
-    std::cerr << message << std::endl;
-    delete [] message;
-    exit(1);
+    GLint len; glGetProgramiv(m_pid, GL_INFO_LOG_LENGTH,&len);
+    std::string log(len,'\0'); glGetProgramInfoLog(m_pid,len,0,log.data());
+    std::cerr << log << std::endl; std::exit(1);
   }
-}  
-
-void Shader::UseProgram () const
-{
-  glUseProgram(m_pid);
 }
 
+void Shader::UseProgram () const { glUseProgram(m_pid); }
 
-void Shader::SetUniform (const std::string& varname, int x) const
-{
-  GLint loc = glGetUniformLocation(m_pid,varname.c_str());
-  glUniform1i(loc,x);
-}
-
-void Shader::SetUniform (const std::string& varname, float x) const
-{
-  GLint loc = glGetUniformLocation(m_pid,varname.c_str());
-  glUniform1f(loc,x);
-}
-
-void Shader::SetUniform (const std::string& varname, const glm::vec3& vet) const
-{
-  GLint loc = glGetUniformLocation(m_pid,varname.c_str());
-  glUniform3fv(loc,1,glm::value_ptr(vet));
-}
-
-void Shader::SetUniform (const std::string& varname, const glm::vec4& vet) const
-{
-  GLint loc = glGetUniformLocation(m_pid,varname.c_str());
-  glUniform4fv(loc,1,glm::value_ptr(vet));
-}
-
-void Shader::SetUniform (const std::string& varname, const glm::mat4& mat) const
-{
-  GLint loc = glGetUniformLocation(m_pid,varname.c_str());
-  glUniformMatrix4fv(loc,1,GL_FALSE,glm::value_ptr(mat));
-}
-
-void Shader::SetUniform (const std::string& varname, const std::vector<int>& x) const
-{
-  GLint loc = glGetUniformLocation(m_pid,varname.c_str());
-  glUniform1iv(loc,x.size(),x.data());
-}
-
-void Shader::SetUniform (const std::string& varname, const std::vector<float>& x) const
-{
-  GLint loc = glGetUniformLocation(m_pid,varname.c_str());
-  glUniform1fv(loc,x.size(),x.data());
-}
-
-void Shader::SetUniform (const std::string& varname, const std::vector<glm::vec3>& vet) const
-{
-  GLint loc = glGetUniformLocation(m_pid,varname.c_str());
-  glUniform3fv(loc,vet.size(),(float*)vet.data());
-}
-
-void Shader::SetUniform (const std::string& varname, const std::vector<glm::vec4>& vet) const
-{
-  GLint loc = glGetUniformLocation(m_pid,varname.c_str());
-  glUniform4fv(loc,vet.size(),(float*)vet.data());
-}
-
-void Shader::SetUniform (const std::string& varname, const std::vector<glm::mat4>& mat) const
-{
-  GLint loc = glGetUniformLocation(m_pid,varname.c_str());
-  glUniformMatrix4fv(loc,mat.size(),GL_FALSE,(float*)mat.data());
-}
+void Shader::SetUniform (const std::string& n, int x) const { GLint loc = glGetUniformLocation(m_pid,n.c_str()); glUniform1i(loc,x); }
+void Shader::SetUniform (const std::string& n, float x) const { GLint loc = glGetUniformLocation(m_pid,n.c_str()); glUniform1f(loc,x); }
+void Shader::SetUniform (const std::string& n, const glm::vec3& v) const { GLint loc = glGetUniformLocation(m_pid,n.c_str()); glUniform3fv(loc,1,glm::value_ptr(v)); }
+void Shader::SetUniform (const std::string& n, const glm::vec4& v) const { GLint loc = glGetUniformLocation(m_pid,n.c_str()); glUniform4fv(loc,1,glm::value_ptr(v)); }
+void Shader::SetUniform (const std::string& n, const glm::mat4& m) const { GLint loc = glGetUniformLocation(m_pid,n.c_str()); glUniformMatrix4fv(loc,1,GL_FALSE,glm::value_ptr(m)); }
+void Shader::SetUniform (const std::string& n, const std::vector<int>& v) const { GLint loc = glGetUniformLocation(m_pid,n.c_str()); glUniform1iv(loc,v.size(),v.data()); }
+void Shader::SetUniform (const std::string& n, const std::vector<float>& v) const { GLint loc = glGetUniformLocation(m_pid,n.c_str()); glUniform1fv(loc,v.size(),v.data()); }
+void Shader::SetUniform (const std::string& n, const std::vector<glm::vec3>& v) const { GLint loc = glGetUniformLocation(m_pid,n.c_str()); glUniform3fv(loc,v.size(),(float*)v.data()); }
+void Shader::SetUniform (const std::string& n, const std::vector<glm::vec4>& v) const { GLint loc = glGetUniformLocation(m_pid,n.c_str()); glUniform4fv(loc,v.size(),(float*)v.data()); }
+void Shader::SetUniform (const std::string& n, const std::vector<glm::mat4>& v) const { GLint loc = glGetUniformLocation(m_pid,n.c_str()); glUniformMatrix4fv(loc,v.size(),GL_FALSE,(float*)v.data()); }
