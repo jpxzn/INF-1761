@@ -19,7 +19,7 @@ Ticks::Ticks(float radius, float innerScale) : m_vao(0), m_vertexCount(0) {
   const float outerR = radius; // Raio maior
 
   for (int i = 0; i < tickCount; ++i) {
-    float ang = (glm::two_pi<float>() / tickCount) * i; // radianos
+    float ang = (glm::two_pi<float>() / tickCount) * i;
     glm::vec2 inner(innerR * std::cos(ang), innerR * std::sin(ang));
     glm::vec2 outer(outerR * std::cos(ang), outerR * std::sin(ang));
 
@@ -30,7 +30,7 @@ Ticks::Ticks(float radius, float innerScale) : m_vao(0), m_vertexCount(0) {
       colors.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
       colors.push_back(glm::vec3(0.0f, 0.0f, 0.0f));
     } else {
-      // Marca menor: mesmo outerR, inner mais próximo do outer (linha menor)
+      // Marca menor
       float innerSmallR = outerR - (outerR - innerR) * 0.5f;
       glm::vec2 innerSmall(innerSmallR * std::cos(ang), innerSmallR * std::sin(ang));
       glm::vec2 outerSmall(outerR * std::cos(ang), outerR * std::sin(ang));
