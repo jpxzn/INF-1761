@@ -5,6 +5,7 @@
 #include "Shader.h"
 #include "Circle.h"
 #include "Triangle.h"
+#include "Ticks.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,6 +15,7 @@ static TrianglePtr ponteiroHora;
 static TrianglePtr ponteiroMin;
 static TrianglePtr ponteiroSeg;
 static CirclePtr circle;
+static TicksPtr ticks;
 static ShaderPtr shd;
 
 static void error (int code, const char* msg)
@@ -42,12 +44,12 @@ static void initialize ()
   int min = local->tm_min;
   int seg = local->tm_sec;
 
-  glClearColor(0.0f,1.0f,1.0f,1.0f);
+  glClearColor(0.0f, 1.0f, 1.0f, 1.0f); // fundo azul claro
 
   float angHora = 360.0f - (hora * 30.0f);
-  float angMin  = 360.0f - (min* 6.0f);
-  float angSeg  = 360.0f - (seg * 6.0f);
-  
+  float angMin  = 360.0f - (min  * 6.0f);
+  float angSeg  = 360.0f - (seg  * 6.0f);
+
   ponteiroHora = Triangle::Make();
   ponteiroHora->setScale(0.6f);
   ponteiroHora->setRotation(angHora);
@@ -57,10 +59,14 @@ static void initialize ()
   ponteiroMin->setRotation(angMin);
 
   ponteiroSeg = Triangle::Make();
-  ponteiroSeg->setRotation(angSeg); 
+  ponteiroSeg->setRotation(angSeg);
 
-  circle = Circle::Make(0.6f, 50);
-  
+  const float RAIO_MOSTRADOR = 0.6f;
+
+  circle = Circle::Make(RAIO_MOSTRADOR, 50);
+
+  ticks = Ticks::Make(RAIO_MOSTRADOR, 0.88f);
+
   shd = Shader::Make();
   shd->AttachVertexShader("shaders/vertex.glsl");
   shd->AttachFragmentShader("shaders/fragment.glsl");
@@ -72,11 +78,16 @@ static void initialize ()
 static void display (GLFWwindow* win)
 {
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
   shd->UseProgram();
+
   circle->Draw();
+  ticks->Draw(*shd);
+
   ponteiroHora->Draw(*shd);
   ponteiroMin->Draw(*shd);
   ponteiroSeg->Draw(*shd);
+
   Error::Check("display");
 }
 
@@ -90,9 +101,8 @@ void update(float deltaTime)
   int seg  = local->tm_sec;
 
   float angHora = 360.0f - (hora * 30.0f);
-  float angMin  = 360.0f - (min* 6.0f);
-  float angSeg  = 360.0f - (seg * 6.0f);
-  
+  float angMin  = 360.0f - (min  * 6.0f);
+  float angSeg  = 360.0f - (seg  * 6.0f);
 
   ponteiroSeg->setRotation(angSeg);
   ponteiroMin->setRotation(angMin);
@@ -101,23 +111,32 @@ void update(float deltaTime)
 
 int main ()
 {
-  glfwInit();
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR,4);
-  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR,1);
-  glfwWindowHint(GLFW_OPENGL_PROFILE,GLFW_OPENGL_CORE_PROFILE);
-
   glfwSetErrorCallback(error);
+  if (!glfwInit()) {
+    printf("Failed to initialize GLFW\n");
+    return 1;
+  }
 
-  GLFWwindow* win = glfwCreateWindow(600,600,"Relógio",nullptr,nullptr);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
+  glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 1);
+  glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+
+  GLFWwindow* win = glfwCreateWindow(600, 600, "Relógio", nullptr, nullptr);
+  if (!win) {
+    printf("Failed to create GLFW window\n");
+    glfwTerminate();
+    return 1;
+  }
+
   glfwSetFramebufferSizeCallback(win, resize);
   glfwSetKeyCallback(win, keyboard);
-  
   glfwMakeContextCurrent(win);
 
-  glewInit(); 
-  if (glewInit() != GLEW_OK) {
-    printf("Failed to initialize GLEW OpenGL context\n");
-    exit(1);
+  GLenum glewErr = glewInit(); // chamada única
+  if (glewErr != GLEW_OK) {
+    printf("Failed to initialize GLEW OpenGL context: %s\n", glewGetErrorString(glewErr));
+    glfwTerminate();
+    return 1;
   }
 
   printf("OpenGL version: %s\n", glGetString(GL_VERSION));
@@ -136,6 +155,7 @@ int main ()
     glfwSwapBuffers(win);
     glfwPollEvents();
   }
+
   glfwTerminate();
   return 0;
 }
