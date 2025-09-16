@@ -50,15 +50,16 @@ static void initialize ()
   float angMin  = 360.0f - (min  * 6.0f);
   float angSeg  = 360.0f - (seg  * 6.0f);
 
-  ponteiroHora = Triangle::Make();
+  ponteiroHora = Triangle::Make(0,0,0);
   ponteiroHora->setScale(0.6f);
   ponteiroHora->setRotation(angHora);
 
-  ponteiroMin = Triangle::Make();
+  ponteiroMin = Triangle::Make(0,0,0);
   ponteiroMin->setScale(0.8f);
   ponteiroMin->setRotation(angMin);
 
-  ponteiroSeg = Triangle::Make();
+  ponteiroSeg = Triangle::Make(255,0,0);
+  ponteiroSeg->setScale(1.0f);
   ponteiroSeg->setRotation(angSeg);
 
   const float RAIO_MOSTRADOR = 0.6f;
