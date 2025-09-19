@@ -101,9 +101,10 @@ void update(float deltaTime)
   int min  = local->tm_min;
   int seg  = local->tm_sec;
 
-  float angHora = 360.0f - (hora * 30.0f);
-  float angMin  = 360.0f - (min  * 6.0f);
-  float angSeg  = 360.0f - (seg  * 6.0f);
+  float angSeg = 360.0f - (seg * 6.0f);
+  float angMin = 360.0f - (min * 6.0f + seg * 0.1f);
+  float angHora = 360.0f - ((hora % 12) * 30.0f + min * 0.5f);
+  
 
   ponteiroSeg->setRotation(angSeg);
   ponteiroMin->setRotation(angMin);
