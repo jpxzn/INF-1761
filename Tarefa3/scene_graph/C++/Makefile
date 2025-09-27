@@ -54,6 +54,7 @@ SRC = \
   texture.cpp \
   transform.cpp \
   triangle.cpp \
+  solar_engine.cpp \
   main_2d.cpp \
 
 OBJ = $(addsuffix .o, $(basename $(SRC))) 

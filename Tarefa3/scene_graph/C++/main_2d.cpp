@@ -16,72 +16,66 @@
 #include "transform.h"
 #include "error.h"
 #include "shader.h"
-#include "quad.h"
-#include "triangle.h"
 #include "disk.h"
+#include "solar_engine.h"
 
 #include <iostream>
 
 static ScenePtr scene;
 static CameraPtr camera;
 
-class MovePointer;
-using MovePointerPtr = std::shared_ptr<MovePointer>;
-class MovePointer : public Engine 
-{
-  TransformPtr m_trf;
-protected:
-  MovePointer (TransformPtr trf) 
-  : m_trf(trf) 
-  {
-  }
-public:
-  static MovePointerPtr Make (TransformPtr trf)
-  {
-    return MovePointerPtr(new MovePointer(trf));
-  }
-  virtual void Update (float dt)
-  {
-    m_trf->Rotate(-dt/30.0f*180.0f,0,0,1);
-  }
+// ===================== Configuração =====================
+namespace Config {
+  constexpr float EarthOrbitSpeed = 20.0f;   // deg/s
+  constexpr float EarthSpinSpeed = 90.0f;   // deg/s
+  constexpr float MoonOrbitSpeed = 120.0f;  // deg/s
+  constexpr float SunX = 5.0f;
+  constexpr float SunY = 5.0f;
+  constexpr float EarthRadius = 3.0f;
+  constexpr float MoonRadius = 1.0f; // distância da lua à Terra
+}
+
+struct SolarSystemNodes {
+  TransformPtr earthOrbit;
+  TransformPtr earthSpin;
+  TransformPtr moonOrbit;
 };
 
-static void initialize (void)
-{
-  // set background color: white 
-  glClearColor(0.8f,1.0f,1.0f,1.0f);
-  // enable depth test 
-  glEnable(GL_DEPTH_TEST);
-
-  // create objects
-  camera = Camera2D::Make(0,10,0,10);
-
-  // Shader for 2D colored/texture rendering
+// Cria shader 2D simples
+static ShaderPtr CreateShader2D() {
   auto shader = Shader::Make();
   shader->AttachVertexShader("../shaders/2d/vertex.glsl");
   shader->AttachFragmentShader("../shaders/2d/fragment.glsl");
   shader->Link();
+  return shader;
+}
 
-  // Solar System (top view):
+// Constrói a cena do sistema solar e retorna também os transforms relevantes
+static std::pair<ScenePtr,SolarSystemNodes> BuildSolarSystem(ShaderPtr shader) {
+  SolarSystemNodes nodes{};
+
   // Sun
   auto trfSun = Transform::Make();
-  trfSun->Translate(5.0f,5.0f,0.0f);
+  trfSun->Translate(Config::SunX,Config::SunY,0.0f);
   auto trfSunScale = Transform::Make();
   trfSunScale->Scale(1.5f,1.5f,1.0f);
   auto sunGeom = Node::Make(trfSunScale, {Color::Make(1.0f,0.9f,0.2f)},{Disk::Make(64)});
   auto sun = Node::Make(trfSun,{sunGeom});
 
-  // Earth orbit
-  auto trfEarthOrbit = Transform::Make();
-  auto earthOrbit = Node::Make(trfEarthOrbit, std::initializer_list<NodePtr>{});
-  // Earth translation to orbital radius
+  // Earth orbit root (rotation center at sun)
+  nodes.earthOrbit = Transform::Make();
+  auto earthOrbit = Node::Make(nodes.earthOrbit, std::initializer_list<NodePtr>{});
+
+  // Earth translation to orbit radius
   auto trfEarthTranslate = Transform::Make();
-  trfEarthTranslate->Translate(3.0f,0.0f,0.0f);
+  trfEarthTranslate->Translate(Config::EarthRadius,0.0f,0.0f);
   auto earthTranslate = Node::Make(trfEarthTranslate, std::initializer_list<NodePtr>{});
-  // Earth self spin
-  auto trfEarthSpin = Transform::Make();
-  auto earthSpin = Node::Make(trfEarthSpin, std::initializer_list<NodePtr>{});
-  // Earth geometry & scale
+
+  // Earth spin
+  nodes.earthSpin = Transform::Make();
+  auto earthSpin = Node::Make(nodes.earthSpin, std::initializer_list<NodePtr>{});
+
+  // Earth geometry
   auto trfEarthGeom = Transform::Make();
   trfEarthGeom->Scale(0.6f,0.6f,1.0f);
   auto earthGeom = Node::Make(trfEarthGeom, {Color::Make(0.2f,0.4f,1.0f)},{Disk::Make(48)});
@@ -91,33 +85,29 @@ static void initialize (void)
   sun->AddNode(earthOrbit);
 
   // Moon orbit
-  auto trfMoonOrbit = Transform::Make();
-  auto moonOrbit = Node::Make(trfMoonOrbit, std::initializer_list<NodePtr>{});
+  nodes.moonOrbit = Transform::Make();
+  auto moonOrbit = Node::Make(nodes.moonOrbit, std::initializer_list<NodePtr>{});
   auto trfMoon = Transform::Make();
-  trfMoon->Translate(1.0f,0.0f,0.0f);
+  trfMoon->Translate(Config::MoonRadius,0.0f,0.0f);
   trfMoon->Scale(0.25f,0.25f,1.0f);
   auto moon = Node::Make(trfMoon,{Color::Make(0.8f,0.8f,0.8f)},{Disk::Make(36)});
   moonOrbit->AddNode(moon);
   earthTranslate->AddNode(moonOrbit);
 
-  // Root with shader managing whole scene
   auto root = Node::Make(shader, std::initializer_list<NodePtr>{sun});
-  scene = Scene::Make(root);
+  auto sc = Scene::Make(root);
+  return {sc, nodes};
+}
 
-  // Engine to animate orbits and self-rotation
-  class SolarEngine : public Engine {
-    TransformPtr m_earthOrbit, m_earthSpin, m_moonOrbit;
-  public:
-    SolarEngine(TransformPtr eo, TransformPtr es, TransformPtr mo)
-      : m_earthOrbit(eo), m_earthSpin(es), m_moonOrbit(mo) {}
-    void Update(float dt) override {
-      m_earthOrbit->Rotate(20.0f * dt, 0,0,1);
-      m_earthSpin->Rotate(90.0f * dt, 0,0,1);
-      m_moonOrbit->Rotate(120.0f * dt, 0,0,1);
-    }
-  };
-
-  scene->AddEngine(std::make_shared<SolarEngine>(trfEarthOrbit, trfEarthSpin, trfMoonOrbit));
+static void initialize () {
+  glClearColor(0.8f,1.0f,1.0f,1.0f);
+  glEnable(GL_DEPTH_TEST);
+  camera = Camera2D::Make(0,10,0,10);
+  auto shader = CreateShader2D();
+  auto [sc, nodes] = BuildSolarSystem(shader);
+  scene = sc;
+  // Anexa engine
+  scene->AddEngine(std::make_shared<SolarEngine>(nodes.earthOrbit, nodes.earthSpin, nodes.moonOrbit));
 }
 
 static void display (GLFWwindow* win)
@@ -164,7 +154,7 @@ int main ()
 
     glfwSetErrorCallback(error);
 
-    GLFWwindow* win = glfwCreateWindow(600, 400, "Sistema Solar", nullptr, nullptr);
+  GLFWwindow* win = glfwCreateWindow(600, 400, "Sistema Solar", nullptr, nullptr);
     assert(win);
     glfwSetFramebufferSizeCallback(win, resize);  // resize callback
     glfwSetKeyCallback(win, keyboard);            // keyboard callback
