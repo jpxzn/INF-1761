@@ -193,7 +193,7 @@ int main ()
 
     glfwSetErrorCallback(error);
 
-  GLFWwindow* win = glfwCreateWindow(1000, 800, "Sistema Solar", nullptr, nullptr);
+  GLFWwindow* win = glfwCreateWindow(800, 800, "Sistema Solar", nullptr, nullptr);
     assert(win);
     glfwSetFramebufferSizeCallback(win, resize);  // resize callback
     glfwSetKeyCallback(win, keyboard);            // keyboard callback

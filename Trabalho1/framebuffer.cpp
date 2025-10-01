@@ -18,7 +18,7 @@ Framebuffer::Framebuffer (TexDepthPtr depth, std::initializer_list<TexturePtr> c
   glBindFramebuffer(GL_FRAMEBUFFER,m_fbo);
   if (m_depth != nullptr)
     glFramebufferTexture(GL_FRAMEBUFFER,GL_DEPTH_ATTACHMENT,m_depth->GetTexId(),0);
-  for (int i=0; i<m_colors.size(); ++i) {
+  for (size_t i=0; i<m_colors.size(); ++i) {
     auto tex = m_colors[i]->GetTexId();
     glFramebufferTexture(GL_FRAMEBUFFER,GL_COLOR_ATTACHMENT0+i,tex,0);
   }
@@ -56,7 +56,7 @@ void Framebuffer::Bind ()
   }
   else {
     std::vector<GLenum> buffers;
-    for (int i=0; i<m_colors.size(); ++i)
+    for (size_t i=0; i<m_colors.size(); ++i)
       buffers.push_back(GL_COLOR_ATTACHMENT0+i);
     glDrawBuffers(GLsizei(m_colors.size()),buffers.data());
   }
