@@ -80,31 +80,32 @@ static void initialize(void)
     ShapePtr sphere = Sphere::Make();
     ShapePtr cylinder = Cylinder::Make(64, 64, 2.0f, 0.5f);  // Creating the cylinder
 
-    // Shader setup
-    ShaderPtr shader = Shader::Make(light, "camera");
-    shader->AttachVertexShader("../shaders/ilum_vert/vertex_texture.glsl");
-    shader->AttachFragmentShader("../shaders/ilum_vert/fragment_texture.glsl");
-    shader->Link();
+  // Shader setup: use non-textured shader for most, and a textured shader just for the sphere
+  ShaderPtr shader = Shader::Make(light, "camera");
+  shader->AttachVertexShader("../shaders/ilum_vert/vertex.glsl");
+  shader->AttachFragmentShader("../shaders/ilum_vert/fragment.glsl");
+  shader->Link();
+
+  ShaderPtr shd_tex = Shader::Make(light, "camera");
+  shd_tex->AttachVertexShader("../shaders/ilum_vert/vertex_texture.glsl");
+  shd_tex->AttachFragmentShader("../shaders/ilum_vert/fragment_texture.glsl");
+  shd_tex->Link();
 
     // Create nodes and apply textures
     NodePtr floor_node = Node::Make(trf_floor, {tampo}, {cube});
     NodePtr cube_node = Node::Make(trf_cube, {cubo}, {cube});  // No texture for the cube
 
-    // Apply texture only to the sphere
-    NodePtr sphere_node = Node::Make(trf_sphere, {tex_earth}, {sphere});
+  // Apply material + texture to the sphere (material provides lighting terms)
+  NodePtr sphere_node = Node::Make(trf_sphere, {esfera, tex_earth}, {sphere});
 
     // Create cylinder node without texture
     NodePtr cylinder_node = Node::Make(trf_cylinder, {cilindro}, {cylinder});  // No texture for the cylinder
 
-    // Create the scene tree (only the sphere node uses texture)
-    NodePtr root = Node::Make(shader, 
-        { 
-            floor_node,  // Floor node
-            cube_node,   // Cube node without texture
-            sphere_node, // Sphere node with texture
-            {cylinder_node} // Cylinder node without texture
-        }
-    );
+  // Create the scene tree: non-textured subtree + textured sphere subtree
+  NodePtr root = Node::Make({
+    Node::Make(shader, { floor_node, cube_node, cylinder_node }),
+    Node::Make(shd_tex, { sphere_node })
+  });
 
     scene = Scene::Make(root);
 }

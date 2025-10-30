@@ -162,6 +162,8 @@ void Shader::DeactiveTexture ()
 void Shader::Load (StatePtr st)
 {
   st->PushShader(shared_from_this());
+  // Reset texture unit allocation at the start of each node subtree
+  m_texunit = 0;
   if (m_light)
     m_light->Load(st);
 }
