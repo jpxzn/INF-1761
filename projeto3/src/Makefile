@@ -1,6 +1,5 @@
 TARGET = t
-
-all: $(TARGET)
+BUILD  = ../build
 
 INC = -I.
 LIB = -L.
@@ -42,18 +41,25 @@ SRC = \
   luxor/luxor.cpp \
   luxor/luxorengine.cpp \
   luxor/movement.cpp \
-  
 
-OBJ = $(addsuffix .o, $(basename $(SRC))) 
+OBJ = $(addprefix $(BUILD)/, $(addsuffix .o, $(basename $(SRC))))
 
-.cpp.o:
-	$(CPP) $(INC) $(CPPFLAGS) -c $< -o $@ 
+$(BUILD)/%.o: %.cpp Makefile | prep
+	@mkdir -p $(dir $@)
+	$(CPP) $(INC) $(CPPFLAGS) -c $< -o $@
 
-$(TARGET): $(OBJ) Makefile 
+$(BUILD)/$(TARGET): $(OBJ) Makefile
 	$(CPP) $(LIB) -o $@ $(OBJ) -lstdc++ -lGL -lGLEW -lglfw -lassimp -ldl -lpthread -lX11 -lXrandr -lXi
 
+all: prep $(BUILD)/$(TARGET)
+
+run: all
+	$(BUILD)/$(TARGET)
+
+prep:
+	mkdir -p $(BUILD)
 
 clean:
-	rm -f $(TARGET) $(OBJ)
+	rm -rf $(BUILD)
 
 

@@ -15,7 +15,10 @@ class LuxorEngine : public Engine {
   std::string m_status;
   AnimationPtr m_curr_anim;
   AnimationPtr m_stand_down_anim;
-  AnimationPtr m_jump_forward_anim;
+  AnimationPtr m_jump_forward_anim; // use as JumpRight
+  AnimationPtr m_jump_left_anim;
+  AnimationPtr m_jump_front_anim;
+  AnimationPtr m_jump_back_anim;
   AnimationPtr m_flip_anim;
   TransformPtr m_trf_all;
   TransformPtr m_trf_base;
@@ -52,14 +55,19 @@ class LuxorEngine : public Engine {
   virtual ~LuxorEngine ();
   bool StandUp ();
   bool StandDown ();
-  bool JumpForward ();
+  bool JumpRight ();    // lateral +X
   bool flip ();
-  bool JumpBackward ();
+  bool JumpLeft ();     // lateral -X
+  bool JumpForward ();  // forward +Z
+  bool JumpBackward (); // backward -Z
   void TurnHead (float angle);
   virtual void Update (float dt);
 private:
   void CreateStandDownAnimation ();
   void CreateJumpForwardAnimation ();
+  void CreateJumpLeftAnimation ();
+  void CreateJumpFrontAnimation ();
+  void CreateJumpBackAnimation ();
   void CreateflipAnimation ();
 };
 

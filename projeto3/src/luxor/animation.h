@@ -8,7 +8,7 @@ using AnimationPtr = std::shared_ptr<Animation>;
 #include "movement.h"
 
 class Animation {
-  int m_curr;   // current movement
+  size_t m_curr;   // current movement index
   std::vector<MovementPtr> m_moves;
 protected:
   Animation (std::initializer_list<MovementPtr> moves);

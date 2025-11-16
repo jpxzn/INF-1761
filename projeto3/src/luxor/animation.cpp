@@ -13,11 +13,13 @@ Animation::~Animation ()
 {
 }
 
-bool Animation::Advance (float dt, bool reverse)  // return true when its done
+bool Animation::Advance (float dt, bool reverse)  // return true when it's done
 {
-  int idx = reverse ? (m_moves.size()-1)-m_curr : m_curr;
+  // use size_t to avoid signed/unsigned comparison warnings
+  size_t idx = reverse ? (m_moves.size()-1)-m_curr : m_curr;
   if (m_moves[idx]->Advance(dt,reverse)) {
-    if (++m_curr == m_moves.size()) {
+    ++m_curr;
+    if (m_curr >= m_moves.size()) { // finished cycle
       m_curr = 0;
       return true;
     }
