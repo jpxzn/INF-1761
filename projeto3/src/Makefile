@@ -22,6 +22,8 @@ SRC = \
   material.cpp \
   mesh.cpp \
   node.cpp \
+  instanced_points.cpp \
+  objmesh.cpp \
   quad.cpp \
   polyoffset.cpp \
   scene.cpp \
