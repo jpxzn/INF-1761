@@ -154,11 +154,20 @@ static void initialize (void)
   AppearancePtr teapotMat = Material::Make(0.8f, 0.8f, 0.9f);
   NodePtr teapot_node = Node::Make(trf_teapot, { teapotMat }, { teapot });
 
+  // Small sphere on upper left corner of table
+  ShapePtr shadowSphere = Sphere::Make(32, 32);
+  TransformPtr trf_shadowSphere = Transform::Make();
+  trf_shadowSphere->Scale(0.4f, 0.4f, 0.4f);  // Small sphere
+  trf_shadowSphere->Translate(-4.4f, 1.0f, -4.0f);  // Upper left corner of table
+  AppearancePtr shadowSphereMat = Material::Make(0.9f, 0.2f, 0.9f);
+  NodePtr shadowSphere_node = Node::Make(trf_shadowSphere, { shadowSphereMat }, { shadowSphere });
+
   // root has the shader so children inherit shading
   g_root = Node::Make(g_shadowShader,
     { Node::Make(trf1, { red }, { cube }),
       chair_node,
       teapot_node,
+      shadowSphere_node,
       lux_node
     }
   );
