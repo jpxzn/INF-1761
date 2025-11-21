@@ -355,62 +355,135 @@ void LuxorEngine::CreateJumpBackAnimation ()
 void LuxorEngine::CreateflipAnimation ()
 {
   MovementPtr move1 = Movement::Make(0.35f);
-  move1->AddTranslation(m_trf_all,
-                        CubicInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
-                                                glm::vec3(0.0f,25.0f,0.0f),
-                                                glm::vec3(0.0f,50.0f,0.0f),
-                                                glm::vec3(0.0f,70.0f,0.0f)
-                                               )
-                       );
-  move1->AddRotation(m_trf_base,
-                     LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
-                                              glm::vec3(-8.0f,0.0f,0.0f)
-                                             )
-                    );
-  move1->AddRotation(m_trf_haste1,
-                     LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
-                                              glm::vec3(-10.0f,0.0f,0.0f)
-                                             )
-                    );
-  MovementPtr move2 = Movement::Make(0.6f);
-  move2->AddTranslation(m_trf_all,
-                        CubicInterpolator::Make(glm::vec3(0.0f,60.0f,0.0f),
-                                                glm::vec3(0.0f,90.0f,0.0f),
-                                                glm::vec3(0.0f,90.0f,0.0f),
-                                                glm::vec3(0.0f,60.0f,0.0f)
-                                               )
-                       );
-  move2->AddRotation(m_trf_all,
-                     LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
-                                              glm::vec3(360.0f,0.0f,45.0f)
-                                             )
-                    );
-  MovementPtr move3 = Movement::Make(0.45f);
-  move3->AddTranslation(m_trf_all,
-                        CubicInterpolator::Make(glm::vec3(0.0f,60.0f,0.0f),
-                                                glm::vec3(0.0f,30.0f,0.0f),
-                                                glm::vec3(0.0f,10.0f,0.0f),
-                                                glm::vec3(0.0f,0.0f,0.0f)
-                                               )
-                       );
-  move3->AddRotation(m_trf_base,
-                     LinearInterpolator::Make(glm::vec3(-8.0f,0.0f,0.0f),
-                                              glm::vec3(0.0f,0.0f,0.0f)
-                                             )
-                    );
-  move3->AddRotation(m_trf_haste1,
-                     LinearInterpolator::Make(glm::vec3(-10.0f,0.0f,0.0f),
-                                              glm::vec3(0.0f,0.0f,0.0f)
-                                             )
-                    );
 
-  m_flip_anim = Animation::Make({move1,move2,move3});
+  move1->AddRotation(m_trf_haste1,
+                    LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                                             glm::vec3(-30.0f,0.0f,0.0f)
+                                            )
+                   );
+  move1->AddRotation(m_trf_haste2,
+                    LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                                             glm::vec3(120.0f,0.0f,0.0f)
+                                            )
+                   );
+  move1->AddRotation(m_trf_haste3,
+                    LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                                             glm::vec3(-120.0f,0.0f,0.0f)
+                                            )
+                   );
+  move1->AddRotation(m_trf_cupula,
+                    LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                                             glm::vec3(30.0f,0.0f,0.0f)
+                                            )
+                   );
+
+  //
+  // MOVIMENTO 2 — Flip completo + Stretch + Follow-through
+  //
+  MovementPtr move2 = Movement::Make(0.65f);
+  
+  move2->AddTranslation(
+    m_trf_all,
+    CubicInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                            glm::vec3(0.0f,20.0f,0.0f),
+                            glm::vec3(0.0f,45.0f,0.0f),
+                            glm::vec3(0.0f,70.0f,0.0f))
+  );
+
+  move2->AddRotation(m_trf_haste1,
+      LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                              glm::vec3(30.0f,0.0f,0.0f))
+  );
+
+  move2->AddRotation(m_trf_haste2,
+      LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                              glm::vec3(-120.0f,0.0f,0.0f))
+  );
+
+  move2->AddRotation(m_trf_haste3,
+      LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                              glm::vec3(120.0f,0.0f,0.0f))
+  );
+
+  move2->AddRotation(m_trf_cupula,
+      LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                              glm::vec3(-30.0f,0.0f,0.0f))
+  );
+
+  MovementPtr move3 = Movement::Make(0.5f);
+  // rotação principal do flip
+
+  move3->AddRotation(
+    m_trf_all,
+    LinearInterpolator::Make(glm::vec3(0.0f),
+                             glm::vec3(-180.0f, 0.0f, 0.0f))
+  );
+
+  move3->AddRotation(m_trf_haste1,
+                    LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                                             glm::vec3(-30.0f,0.0f,0.0f)
+                                            )
+                   );
+  move3->AddRotation(m_trf_haste2,
+                    LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                                             glm::vec3(120.0f,0.0f,0.0f)
+                                            )
+                   );
+  move3->AddRotation(m_trf_haste3,
+                    LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                                             glm::vec3(-120.0f,0.0f,0.0f)
+                                            )
+                   );
+  move3->AddRotation(m_trf_cupula,
+                    LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                                             glm::vec3(30.0f,0.0f,0.0f)
+                                            )
+                   );
+  
+
+  
+  MovementPtr move4 = Movement::Make(0.5f);
+  // rotação principal do flip
+  move4->AddRotation(
+    m_trf_all,
+    LinearInterpolator::Make(glm::vec3(0.0f),
+                             glm::vec3(-180.0f, 0.0f, 0.0f))
+  );
+
+  MovementPtr move5 = Movement::Make(0.5f);
+
+  move5->AddTranslation(m_trf_all,
+  CubicInterpolator::Make(glm::vec3(0.0f,60.0f,0.0f),
+                          glm::vec3(0.0f,30.0f,0.0f),
+                          glm::vec3(0.0f,10.0f,0.0f),
+                          glm::vec3(0.0f,0.0f,0.0f)
+                          )
+  );
+  move5->AddRotation(m_trf_haste1,
+      LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                              glm::vec3(30.0f,0.0f,0.0f))
+  );
+
+  move5->AddRotation(m_trf_haste2,
+      LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                              glm::vec3(-120.0f,0.0f,0.0f))
+  );
+
+  move5->AddRotation(m_trf_haste3,
+      LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                              glm::vec3(120.0f,0.0f,0.0f))
+  );
+
+  move5->AddRotation(m_trf_cupula,
+      LinearInterpolator::Make(glm::vec3(0.0f,0.0f,0.0f),
+                              glm::vec3(-30.0f,0.0f,0.0f))
+  );
+  m_flip_anim = Animation::Make({move1, move2, move3, move4, move5});
 }
+
 
 bool LuxorEngine::flip ()
 {
-  if (m_curr_anim || m_status != "down")
-    return false;
   if (m_trf_all) m_trf_all_orig = m_trf_all->GetMatrix();
   if (m_trf_base) m_trf_base_orig = m_trf_base->GetMatrix();
   if (m_trf_haste1) m_trf_haste1_orig = m_trf_haste1->GetMatrix();
